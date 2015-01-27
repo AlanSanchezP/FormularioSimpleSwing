@@ -131,7 +131,7 @@ public class ventanaFormulario extends JFrame implements ActionListener {
                         String mensaje = rsSexo.getString("Mensaje");
                         if(!mensaje.equals("Operación cancelada. Email registrado previamente")){
                             usuarioID = mensaje;
-                            mensaje = "Registro exitoso. ID de usuario registrado: " + usuarioID;
+                            mensaje = "Registro exitoso. \nID de usuario registrado: " + usuarioID;
                             campoNombre.setText("");
                             campoApellidoP.setText("");
                             campoApellidoM.setText("");
