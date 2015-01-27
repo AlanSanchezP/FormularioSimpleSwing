@@ -13,7 +13,6 @@ import java.awt.*;
 import java.io.FileWriter;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import static javax.swing.JFrame.EXIT_ON_CLOSE;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
@@ -113,32 +112,79 @@ public class ventanaFormulario extends JFrame implements ActionListener {
             String aPaterno = campoApellidoP.getText();
             String aMaterno = campoApellidoM.getText();
             int sexoID = seleccionarSexo.getSelectedIndex() + 1;
+            String sexo = seleccionarSexo.getSelectedItem().toString();
             String email = campoEmail.getText();
-            try{
-                conexion.conectar();
-                ResultSet rsSexo = conexion.consulta("call sp_CreaUsuario('" + nombre + "', '" +
-                                                                               aPaterno + "', '" + 
-                                                                               aMaterno + "', " + 
-                                                                               sexoID + ", '" + 
-                                                                               email + "')");
-                
-                if(rsSexo.next()){
-                    String mensaje = rsSexo.getString("Mensaje");
-                    if(!mensaje.equals("Operación cancelada. Email registrado previamente")){
-                        mensaje = "Registro exitoso. ID de usuario registrado: " + mensaje;
-                        campoNombre.setText("");
-                        campoApellidoP.setText("");
-                        campoApellidoM.setText("");
-                        seleccionarSexo.setSelectedIndex(0);
-                        campoEmail.setText("");
-                    }
-                    JOptionPane.showMessageDialog(contenedor,mensaje,"Aviso",JOptionPane.WARNING_MESSAGE);
-                }
-                rsSexo.close();
-                conexion.cerrar();
+            String usuarioID = "";
+            if(nombre.equals("") || aPaterno.equals("") || aMaterno.equals("") || email.equals("")){
+                JOptionPane.showMessageDialog(contenedor,"Llena primero todos los campos.","Aviso",JOptionPane.WARNING_MESSAGE);
+            }
+            else{
+                try{
+                    conexion.conectar();
+                    ResultSet rsSexo = conexion.consulta("call sp_CreaUsuario('" + nombre + "', '" +
+                                                                                   aPaterno + "', '" + 
+                                                                                   aMaterno + "', " + 
+                                                                                   sexoID + ", '" + 
+                                                                                   email + "')");
 
-            } catch(SQLException exx){
-                System.out.println(exx);
+                    if(rsSexo.next()){
+                        String mensaje = rsSexo.getString("Mensaje");
+                        if(!mensaje.equals("Operación cancelada. Email registrado previamente")){
+                            usuarioID = mensaje;
+                            mensaje = "Registro exitoso. ID de usuario registrado: " + usuarioID;
+                            campoNombre.setText("");
+                            campoApellidoP.setText("");
+                            campoApellidoM.setText("");
+                            seleccionarSexo.setSelectedIndex(0);
+                            campoEmail.setText("");
+                        }
+                        JOptionPane.showMessageDialog(contenedor,mensaje,"Aviso",JOptionPane.WARNING_MESSAGE);
+                    }
+                    rsSexo.close();
+                    conexion.cerrar();
+
+                } catch(SQLException exx){
+                    System.out.println(exx);
+                }
+                try{
+                    
+                    Element elemento = new Element ("Datos-Usuario");
+                    elemento.detach();
+                    Document doc = new Document(elemento);
+                    
+                    Element idElement= new Element("id-usuario");
+                    idElement.setText(usuarioID);
+                    doc.getRootElement().addContent(idElement);
+                    
+                    Element nombreElement= new Element("nombre");
+                    nombreElement.setText(nombre);
+                    doc.getRootElement().addContent(nombreElement);
+
+                    Element apellidosElement= new Element("apellidos");
+                    apellidosElement.addContent(new Element("apellido-paterno").setText(aPaterno));
+                    apellidosElement.addContent(new Element("apellido-materno").setText(aMaterno));
+                    doc.getRootElement().addContent(apellidosElement);
+                    
+                    Element emailElement= new Element("email");
+                    emailElement.setText(email);
+                    doc.getRootElement().addContent(emailElement);
+
+                    Element sexoElement= new Element("sexo");
+                    sexoElement.addContent(new Element("sexo-id").setText(sexoID + ""));
+                    sexoElement.addContent(new Element("sexo-descripcion").setText(sexo));
+                    doc.getRootElement().addContent(sexoElement);
+                    
+                    XMLOutputter xmlOutput = new XMLOutputter();
+
+                    xmlOutput.setFormat(Format.getPrettyFormat());
+                    xmlOutput.output(doc, new FileWriter("archivosXML/DatosUsuario_" + usuarioID +".xml"));
+
+                    System.out.println("Archivo XML creado exitosamente.");
+
+                } catch (Exception io) {
+                    
+                    System.out.println(io.getMessage());
+                }
             }
         }
     }
