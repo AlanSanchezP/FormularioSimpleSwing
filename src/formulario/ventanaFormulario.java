@@ -6,17 +6,18 @@
 
 package formulario;
 
-import java.awt.Container;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JRadioButton;
-import javax.swing.JTextField;
+import javax.swing.*;
+import java.awt.event.*;
+import java.awt.*;
+
+import java.io.FileWriter;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import static javax.swing.JFrame.EXIT_ON_CLOSE;
+import org.jdom2.Document;
+import org.jdom2.Element;
+import org.jdom2.output.Format;
+import org.jdom2.output.XMLOutputter;
 
 /**
  *
@@ -24,21 +25,22 @@ import javax.swing.JTextField;
  */
 public class ventanaFormulario extends JFrame implements ActionListener {
     
-    private final JLabel etiquetaNombre, etiquetaApellidoP, etiquetaApellidoM, etiquetaSexo, etiquetaPregunta;
-    private final JTextField campoNombre, campoApellidoP, campoApellidoM; 
+    private final JLabel etiquetaNombre, etiquetaApellidoP, etiquetaApellidoM, etiquetaSexo, etiquetaEmail;
+    private final JTextField campoNombre, campoApellidoP, campoApellidoM, campoEmail; 
     private final JComboBox seleccionarSexo;
-    private final JRadioButton opcion1, opcion2;
-    private final ButtonGroup pregunta;
     private JButton botonEnviar;
     private final Container contenedor;
+    private crear_conexion conexion;
     
     public ventanaFormulario(){
         contenedor=getContentPane();
         contenedor.setLayout(null);
-        setTitle("Formulario");
+        setTitle("Formulario Datos Personales");
         setSize(250, 360);
         setLocationRelativeTo(null);
         setResizable(false);
+        
+        conexion = new crear_conexion();
         
         etiquetaNombre = new JLabel("Nombre");
         etiquetaNombre.setBounds(20,5,210,20);
@@ -64,33 +66,37 @@ public class ventanaFormulario extends JFrame implements ActionListener {
         campoApellidoM.setBounds(20,135,210,35);
         contenedor.add(campoApellidoM);
         
+        etiquetaEmail = new JLabel("Email");
+        etiquetaEmail.setBounds(20,170,210,20);
+        contenedor.add(etiquetaEmail);
+        
+        campoEmail = new JTextField();
+        campoEmail.setBounds(20,190,210,35);
+        contenedor.add(campoEmail);
+        
         etiquetaSexo = new JLabel("Sexo");
-        etiquetaSexo.setBounds(20,170,210,20);
+        etiquetaSexo.setBounds(20,225,210,20);
         contenedor.add(etiquetaSexo);
         
         seleccionarSexo = new JComboBox();
-        seleccionarSexo.setBounds(20,190,210,35);
+        seleccionarSexo.setBounds(20,245,210,35);
         contenedor.add(seleccionarSexo);
-        seleccionarSexo.addItem("Masculino");
-        seleccionarSexo.addItem("Femenino");
-        seleccionarSexo.addItem("Otro");
         
-        etiquetaPregunta = new JLabel("¿En serio quieres enviar estos datos?");
-        etiquetaPregunta.setBounds(20,230,210,20);
-        contenedor.add(etiquetaPregunta);
-        
-        pregunta = new ButtonGroup();
-        opcion1 = new JRadioButton("Si");
-        opcion1.setBounds(20,250,80,20);
-        pregunta.add(opcion1);
-        contenedor.add(opcion1);
-        opcion2 = new JRadioButton("No");
-        opcion2.setBounds(100,250,80,20);
-        pregunta.add(opcion2);
-        contenedor.add(opcion2);
+        try{
+            conexion.conectar();
+            ResultSet rsSexo = conexion.consulta("call sp_TraeGeneros()");
+            System.out.println("Traidos Los Generos Correctamente");
+            
+            while(rsSexo.next()){
+                seleccionarSexo.addItem(rsSexo.getString("genero"));
+            }
+
+        } catch(SQLException exx){
+            System.out.println(exx);
+        }
         
         botonEnviar = new JButton("Enviar Datos");
-        botonEnviar.setBounds(50,280,150,35);
+        botonEnviar.setBounds(50,290,150,35);
         contenedor.add(botonEnviar);
         
         botonEnviar.addActionListener(this);
