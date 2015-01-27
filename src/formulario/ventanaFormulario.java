@@ -1,37 +1,33 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package formulario;
 
+//Librerias Swing
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
 
-import java.io.FileWriter;
+//Librerias SQL
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+//Librerias para el XML
+import java.io.FileWriter;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.output.Format;
 import org.jdom2.output.XMLOutputter;
 
-/**
- *
- * @author Alumno
- */
 public class ventanaFormulario extends JFrame implements ActionListener {
     
+    //Declarar variables
     private final JLabel etiquetaNombre, etiquetaApellidoP, etiquetaApellidoM, etiquetaSexo, etiquetaEmail;
     private final JTextField campoNombre, campoApellidoP, campoApellidoM, campoEmail; 
     private final JComboBox seleccionarSexo;
-    private JButton botonEnviar;
+    private final JButton botonEnviar;
     private final Container contenedor;
     private crear_conexion conexion;
     
     public ventanaFormulario(){
+        //Inicializar propiedades del JFrame
         contenedor=getContentPane();
         contenedor.setLayout(null);
         setTitle("Formulario Datos Personales");
@@ -39,6 +35,7 @@ public class ventanaFormulario extends JFrame implements ActionListener {
         setLocationRelativeTo(null);
         setResizable(false);
         
+        //Inicializar variables e indicar coordenadas elementos Swing
         conexion = new crear_conexion();
         
         etiquetaNombre = new JLabel("Nombre");
@@ -81,14 +78,16 @@ public class ventanaFormulario extends JFrame implements ActionListener {
         seleccionarSexo.setBounds(20,245,210,35);
         contenedor.add(seleccionarSexo);
         
+        //Llenar JComboBox desde la base de datos
         try{
             conexion.conectar();
             ResultSet rsSexo = conexion.consulta("call sp_TraeGeneros()");
-            System.out.println("Traidos Los Generos Correctamente");
+            System.out.println("Llenado exitoso de JComboBox.");
             
             while(rsSexo.next()){
                 seleccionarSexo.addItem(rsSexo.getString("genero"));
             }
+            //Cerrar conexion
             rsSexo.close();
             conexion.cerrar();
 
@@ -107,7 +106,9 @@ public class ventanaFormulario extends JFrame implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) throws UnsupportedOperationException{ 
+        //Capturar clic en el boton
         if(e.getSource().equals(botonEnviar)){
+            //Obtener datos de los campos
             String nombre = campoNombre.getText();
             String aPaterno = campoApellidoP.getText();
             String aMaterno = campoApellidoM.getText();
@@ -115,10 +116,13 @@ public class ventanaFormulario extends JFrame implements ActionListener {
             String sexo = seleccionarSexo.getSelectedItem().toString();
             String email = campoEmail.getText();
             String usuarioID = "";
+            
+            //Validar campos vacios
             if(nombre.equals("") || aPaterno.equals("") || aMaterno.equals("") || email.equals("")){
                 JOptionPane.showMessageDialog(contenedor,"Llena primero todos los campos.","Aviso",JOptionPane.WARNING_MESSAGE);
             }
             else{
+                //Ingresar datos en la base
                 try{
                     conexion.conectar();
                     ResultSet rsSexo = conexion.consulta("call sp_CreaUsuario('" + nombre + "', '" +
@@ -132,6 +136,7 @@ public class ventanaFormulario extends JFrame implements ActionListener {
                         if(!mensaje.equals("Operación cancelada. Email registrado previamente")){
                             usuarioID = mensaje;
                             mensaje = "Registro exitoso. \nID de usuario registrado: " + usuarioID;
+                            //Vaciar campos
                             campoNombre.setText("");
                             campoApellidoP.setText("");
                             campoApellidoM.setText("");
@@ -147,11 +152,12 @@ public class ventanaFormulario extends JFrame implements ActionListener {
                     System.out.println(exx);
                 }
                 try{
-                    
+                    //Crear elemento raiz del XML
                     Element elemento = new Element ("Datos-Usuario");
                     elemento.detach();
                     Document doc = new Document(elemento);
                     
+                    //Creación de elementos en el XML
                     Element idElement= new Element("id-usuario");
                     idElement.setText(usuarioID);
                     doc.getRootElement().addContent(idElement);
@@ -174,6 +180,7 @@ public class ventanaFormulario extends JFrame implements ActionListener {
                     sexoElement.addContent(new Element("sexo-descripcion").setText(sexo));
                     doc.getRootElement().addContent(sexoElement);
                     
+                    //Guardar el archivo XML
                     XMLOutputter xmlOutput = new XMLOutputter();
 
                     xmlOutput.setFormat(Format.getPrettyFormat());
@@ -182,7 +189,6 @@ public class ventanaFormulario extends JFrame implements ActionListener {
                     System.out.println("Archivo XML creado exitosamente.");
 
                 } catch (Exception io) {
-                    
                     System.out.println(io.getMessage());
                 }
             }
