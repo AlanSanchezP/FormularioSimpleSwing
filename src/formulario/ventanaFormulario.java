@@ -90,6 +90,8 @@ public class ventanaFormulario extends JFrame implements ActionListener {
             while(rsSexo.next()){
                 seleccionarSexo.addItem(rsSexo.getString("genero"));
             }
+            rsSexo.close();
+            conexion.cerrar();
 
         } catch(SQLException exx){
             System.out.println(exx);
@@ -110,11 +112,34 @@ public class ventanaFormulario extends JFrame implements ActionListener {
             String nombre = campoNombre.getText();
             String aPaterno = campoApellidoP.getText();
             String aMaterno = campoApellidoM.getText();
-            String sexo = seleccionarSexo.getSelectedItem().toString();
-            String respuesta = campoNombre.getText();
-            String texto = "Nombre: " + nombre + " \nApellidos: " + aPaterno + " " + aMaterno + "\nSexo :" + sexo + "\nRespuesta: " + respuesta;
-            
-            JOptionPane.showMessageDialog(contenedor,texto,"Despliegue de datos",JOptionPane.WARNING_MESSAGE);
+            int sexoID = seleccionarSexo.getSelectedIndex() + 1;
+            String email = campoEmail.getText();
+            try{
+                conexion.conectar();
+                ResultSet rsSexo = conexion.consulta("call sp_CreaUsuario('" + nombre + "', '" +
+                                                                               aPaterno + "', '" + 
+                                                                               aMaterno + "', " + 
+                                                                               sexoID + ", '" + 
+                                                                               email + "')");
+                
+                if(rsSexo.next()){
+                    String mensaje = rsSexo.getString("Mensaje");
+                    if(!mensaje.equals("Operación cancelada. Email registrado previamente")){
+                        mensaje = "Registro exitoso. ID de usuario registrado: " + mensaje;
+                        campoNombre.setText("");
+                        campoApellidoP.setText("");
+                        campoApellidoM.setText("");
+                        seleccionarSexo.setSelectedIndex(0);
+                        campoEmail.setText("");
+                    }
+                    JOptionPane.showMessageDialog(contenedor,mensaje,"Aviso",JOptionPane.WARNING_MESSAGE);
+                }
+                rsSexo.close();
+                conexion.cerrar();
+
+            } catch(SQLException exx){
+                System.out.println(exx);
+            }
         }
     }
     
